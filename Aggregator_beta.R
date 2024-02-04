@@ -521,12 +521,12 @@ poll_plot <- plot_spline_estimates %>%
 
 ## Export plot
 ggsave(poll_plot, 
-       filename = "PollsFrance2022_evolution.pdf",
+       filename = "PollsFrance2024_evolution.pdf",
        height = 6, 
        width = 10, 
        device = cairo_pdf)
 ggsave(poll_plot, 
-       filename = "PollsFrance2022_evolution.png",
+       filename = "PollsFrance2024_evolution.png",
        height = 6, 
        width = 10, 
        device = "png", 
@@ -657,12 +657,12 @@ inst_plot <- plot_inst_estimates %>%
 
 ## Export plot
 ggsave(inst_plot, 
-       filename = "PollsFrance2022_latest.pdf",
+       filename = "PollsFrance2024_latest.pdf",
        height = 7.5, 
        width = 10,
        device = cairo_pdf)
 ggsave(inst_plot, 
-       filename = "PollsFrance2022_latest.png",
+       filename = "PollsFrance2024_latest.png",
        height = 7.5, 
        width = 10, 
        device = "png", 
