@@ -2,15 +2,15 @@
 
 Estimates of the voting intentions for the 2024 French European Election (medians of the posterior distributions, and 95%, 90%, 80%, and 50% high density credible intervals) on February 4, 2024, four months before the election:
 
-![](https://github.com/flavienganter/polls-2022-election/blob/main/PollsFrance2022_latest.png?raw=true)
+![](https://github.com/flavienganter/polls-2024-election/blob/main/PollsFrance2024_latest.png?raw=true)
 
-Evolutions of voting intentions since June 2023 (medians of the posterior distributions, and 95% and 50% high density credible intervals) and official results:
+Evolutions of voting intentions since September 2023 (medians of the posterior distributions, and 95% and 50% high density credible intervals):
 
-![](https://github.com/flavienganter/polls-2022-election/blob/main/PollsFrance2022_evolution_final.png?raw=true)
+![](https://github.com/flavienganter/polls-2024-election/blob/main/PollsFrance2024_evolution_final.png?raw=true)
 
 ## Model
 
-I use data from all voting intention polls fielded since June 1, 2023, based on the survey reports available on the [Commission des sondages website](https://www.commission-des-sondages.fr/notices/). I build on [Heidemanns, Gelman and Morris (2020)](https://hdsr.mitpress.mit.edu/pub/nw1dzd02/release/1) to build a poll aggregator that does just that—aggregating polls—with no prediction intention whatsoever. The model is estimated with Stan.
+I use data from all voting intention polls fielded mid-June 2023, based on the survey reports available on the [Commission des sondages website](https://www.commission-des-sondages.fr/notices/). I build on [Heidemanns, Gelman and Morris (2020)](https://hdsr.mitpress.mit.edu/pub/nw1dzd02/release/1) to build a poll aggregator that does just that—aggregating polls—with no prediction intention whatsoever. The model is estimated with Stan.
 
 For each scenario $i$ (part of poll $p\ =\ p_{[i]}$) and each candidate $c$, $s_{ci}^{\*}$ is the (adjusted) share of respondents who indicated support for candidate $c$. $s_{ci}^{\*}$ is typically not available, as polling firm round their estimates, so that one can only observe $s_{ci}$. To account for the uncertainty induced by the rounding, I model $s_{ci}^{\*}$ as a latent parameter defined by
 
@@ -26,7 +26,7 @@ where $\theta_{ci}$ is defined as
 
 $$ \theta_{ci}\ \equiv\ \text{logit}^{-1}(\psi_c(date_i)\ +\ \mu_{cp\[i\]}\ +\ \lambda_{ch\[i\]}\  +\ X_i\beta_c(date_i)) $$
 
-and $date_i$ is the date, centered so that $date_i\ =\ 1$ on September 1, 2021.
+and $date_i$ is the date, centered so that $date_i\ =\ 1$ on June 16, 2023 (date of the beginning of the field period of the first survey considered).
 
 ### Splines
 
