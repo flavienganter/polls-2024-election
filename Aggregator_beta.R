@@ -374,12 +374,9 @@ poll_plot <- plot_spline_estimates %>%
                          paste0(as.character(label_candidate), " (",
                                 unlist(lapply(median*100, round2)), "%)"),
                          NA_character_),
-         median_label = case_when(candidate == "Liste DLR" ~ median - .008,
-                                  candidate == "Liste PCF" ~ median + .004,
-                                  candidate == "Liste R!" ~ median - .005,
-                                  candidate == "Liste LFI" ~ median + .001,
-                                  #candidate == "Nathalie Arthaud" ~ median - .002,
-                                  #candidate == "Jean Lassalle" ~ median + .003,
+         median_label = case_when(candidate == "Liste PCF" ~ median + .003,
+                                  candidate == "Liste EELV" ~ median + .006,
+                                  candidate == "Liste LFI" ~ median - .004,
                                   !is.na(candidate) ~ median)) %>% 
   group_by(candidate) %>% 
   mutate(lower50_l = zoo::rollmean(lower50, k = 2, align = "left", fill = NA),
