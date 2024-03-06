@@ -119,6 +119,7 @@ data <- read_excel("PollsData.xlsx") %>%
   # vote, or a mix of both)
   mutate(vote_eff = round(n_t1 * n_wgt * share),
          tot_eff = round(n_t1 * n_wgt),
+         not_hayer = 1 - hayer,
          unsure_1 = scale_factor(variable = unsure)[[1]],
          unsure_2 = scale_factor(variable = unsure)[[2]]) %>% 
   
@@ -171,7 +172,7 @@ data_i <- data %>%
          r_5 = ifelse(rounding_ind == 5, rr, 0))
 
 # Define splines 
-num_knots     <- 3
+num_knots     <- 4
 spline_degree <- 3
 num_basis     <- num_knots + spline_degree - 1
 B             <- t(bs(1:max(data_i$id_date), df = num_basis, degree = spline_degree, intercept = TRUE))
@@ -198,7 +199,7 @@ data_spline_model <- list(N             = nrow(data_i),
                           P             = length(unique(data_i$id_poll)),
                           id_house      = data_i$id_house,
                           F             = length(unique(data_i$id_house)),
-                          X             = data_i[, c("unsure_1", "unsure_2")],
+                          X             = data_i[, c("unsure_1", "unsure_2", "not_hayer")],
                           num_knots     = num_knots,
                           knots         = unname(quantile(1:max(data_i$id_date), probs = seq(from = 0, to = 1, length.out = num_knots))),
                           spline_degree = spline_degree,
@@ -374,9 +375,10 @@ poll_plot <- plot_spline_estimates %>%
                          paste0(as.character(label_candidate), " (",
                                 unlist(lapply(median*100, round2)), "%)"),
                          NA_character_),
-         median_label = case_when(candidate == "Liste PCF" ~ median + .003,
-                                  candidate == "Liste EELV" ~ median + .006,
-                                  candidate == "Liste LFI" ~ median - .004,
+         median_label = case_when(candidate == "Liste LO" ~ median - .004,
+                                  candidate == "Liste LFI" ~ median + .007,
+                                  candidate == "Liste LR" ~ median - .001,
+                                  candidate == "Liste EELV" ~ median - .007,
                                   !is.na(candidate) ~ median)) %>% 
   group_by(candidate) %>% 
   mutate(lower50_l = zoo::rollmean(lower50, k = 2, align = "left", fill = NA),
