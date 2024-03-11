@@ -375,10 +375,8 @@ poll_plot <- plot_spline_estimates %>%
                          paste0(as.character(label_candidate), " (",
                                 unlist(lapply(median*100, round2)), "%)"),
                          NA_character_),
-         median_label = case_when(candidate == "Liste LO" ~ median - .004,
-                                  candidate == "Liste LFI" ~ median + .007,
-                                  candidate == "Liste LR" ~ median - .001,
-                                  candidate == "Liste EELV" ~ median - .007,
+         median_label = case_when(candidate == "Liste LFI" ~ median + .002,
+                                  candidate == "Liste LR" ~ median - .005,
                                   !is.na(candidate) ~ median)) %>% 
   group_by(candidate) %>% 
   mutate(lower50_l = zoo::rollmean(lower50, k = 2, align = "left", fill = NA),
