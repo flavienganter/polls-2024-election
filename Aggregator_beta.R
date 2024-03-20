@@ -94,7 +94,8 @@ data <- read_excel("PollsData.xlsx") %>%
                                   share == "T_1.5" ~ 5,
                                   share == "T_1" ~ 4,
                                   rounding == 1 ~ 2,
-                                  rounding == 0.5 ~ 1)) %>% 
+                                  rounding == 0.5 ~ 1,
+                                  rounding == 0.1 ~ 0)) %>% 
   
   # Recode truncated values and switch to share
   mutate(share = case_when(share == "T_0.5" ~ 0.0025,
@@ -165,6 +166,7 @@ data_i <- data %>%
   group_by(id_house) %>% mutate(id_house = cur_group_id()) %>% ungroup() %>% 
   group_by(rounding_ind) %>%
   mutate(rr = 1:n(),
+         r_0 = ifelse(rounding_ind == 0, rr, 0),
          r_1 = ifelse(rounding_ind == 1, rr, 0),
          r_2 = ifelse(rounding_ind == 2, rr, 0),
          r_3 = ifelse(rounding_ind == 3, rr, 0),
@@ -184,6 +186,8 @@ data_spline_model <- list(N             = nrow(data_i),
                           vshare_raw    = data_i$vshare_raw,
                           sum_share     = data_i$sum_share,
                           rounding_ind  = data_i$rounding_ind,
+                          r_0           = data_i$r_0,
+                          N_0           = max(data_i$r_0),
                           r_1           = data_i$r_1,
                           N_1           = max(data_i$r_1),
                           r_2           = data_i$r_2,

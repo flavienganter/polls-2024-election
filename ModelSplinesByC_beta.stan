@@ -7,6 +7,8 @@ data {
   array[N] real<lower=0,upper=1> vshare_raw;
   array[N] real sum_share;
   array[N] int rounding_ind;
+  array[N] int r_0;
+  int N_0;
   array[N] int r_1;
   int N_1;
   array[N] int r_2;
@@ -82,7 +84,9 @@ transformed parameters {
     
     
     // Rounding error
-    if (rounding_ind[i] == 1) {
+    if (rounding_ind[i] == 0) {
+      epsilon[i] = epsilon1[r_0[i]];
+    } else if (rounding_ind[i] == 1) {
       epsilon[i] = epsilon1[r_1[i]];
     } else if (rounding_ind[i] == 2) {
       epsilon[i] = epsilon2[r_2[i]];
