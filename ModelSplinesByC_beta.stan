@@ -24,7 +24,7 @@ data {
   array[N] int id_date;
   array[N] int id_house;
   int F;
-  matrix[N,3] X;
+  matrix[N,4] X;
   
   // Splines
   int num_knots;
@@ -45,7 +45,7 @@ parameters {
   // Covariates
   array[P] real mu;
   array[F] real lambda;
-  array[3] real beta;
+  array[4] real beta;
   array[2] real nu;
   real<lower=0> tau_mu;
   real<lower=0> tau_lambda;
@@ -80,7 +80,7 @@ transformed parameters {
                                 tau_lambda * lambda[id_house[i]] + // House effect
                                 X[i,1] * (beta[1] + nu[1] * (id_date[i] - 1)) + // Population definition
                                 X[i,2] * (beta[2] + nu[2] * (id_date[i] - 1)) +
-                                X[i,3] * beta[3]);
+                                X[i,3] * beta[3] + X[i,4] * beta[4]);
     
     
     // Rounding error

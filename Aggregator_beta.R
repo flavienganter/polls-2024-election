@@ -82,6 +82,9 @@ data <- read_excel("PollsData.xlsx") %>%
     
   # Remove irrelavant scenarios
   filter(n_wgt > 0) %>%
+    
+  # Remove DLF
+  select(-c_dlf) %>% 
   
   # Wide to long
   gather(candidate, share, c_lo:c_r) %>% 
@@ -121,6 +124,7 @@ data <- read_excel("PollsData.xlsx") %>%
   mutate(vote_eff = round(n_t1 * n_wgt * share),
          tot_eff = round(n_t1 * n_wgt),
          not_hayer = 1 - hayer,
+         not_dupontaignant = 1 - dupontaignant,
          unsure_1 = scale_factor(variable = unsure)[[1]],
          unsure_2 = scale_factor(variable = unsure)[[2]]) %>% 
   
@@ -132,9 +136,8 @@ data <- read_excel("PollsData.xlsx") %>%
                                   candidate == "c_ps" ~ 5,
                                   candidate == "c_lrem" ~ 6,
                                   candidate == "c_lr" ~ 7,
-                                  candidate == "c_dlf" ~ 8,
-                                  candidate == "c_rn" ~ 9,
-                                  candidate == "c_r" ~ 10)) %>% 
+                                  candidate == "c_rn" ~ 8,
+                                  candidate == "c_r" ~ 9)) %>% 
   
   # Create a house ID
   group_by(house) %>% 
@@ -157,7 +160,7 @@ save(data, file = "PollsData.RData")
 
 # MODEL -------------------------------------------------------------------------------------------------
 
-for (i in 1:10) {
+for (i in 1:9) {
   
 # Keep data for one candidate
 data_i <- data %>% 
@@ -203,7 +206,7 @@ data_spline_model <- list(N             = nrow(data_i),
                           P             = length(unique(data_i$id_poll)),
                           id_house      = data_i$id_house,
                           F             = length(unique(data_i$id_house)),
-                          X             = data_i[, c("unsure_1", "unsure_2", "not_hayer")],
+                          X             = data_i[, c("unsure_1", "unsure_2", "not_hayer", "not_dupontaignant")],
                           num_knots     = num_knots,
                           knots         = unname(quantile(1:max(data_i$id_date), probs = seq(from = 0, to = 1, length.out = num_knots))),
                           spline_degree = spline_degree,
@@ -247,8 +250,7 @@ spline_draws <- get_draws(candidate = 1) %>%
   add_column(get_draws(candidate = 6)) %>% 
   add_column(get_draws(candidate = 7)) %>% 
   add_column(get_draws(candidate = 8)) %>% 
-  add_column(get_draws(candidate = 9)) %>% 
-  add_column(get_draws(candidate = 10))
+  add_column(get_draws(candidate = 9))
 
 
 ## Get official results ----
@@ -353,23 +355,21 @@ plot_spline_estimates <- plot_spline_estimates %>%
                                          candidate == 5 ~ "Liste PS-PP",
                                          candidate == 6 ~ "Liste LREM",
                                          candidate == 7 ~ "Liste LR",
-                                         candidate == 8 ~ "Liste DLF",
-                                         candidate == 9 ~ "Liste RN",
-                                         candidate == 10 ~ "Liste R!")))
+                                         candidate == 8 ~ "Liste RN",
+                                         candidate == 9 ~ "Liste R!")))
 
 
 ### Create plot
 
 # Define candidate colors
-candidate_colors <- c("#0070c0",
-                      "#00b050",
+candidate_colors <- c("#00b050",
                       "#ff1300",
                       "gray60", 
-                      "#002060",
+                      "#0070c0",
                       "#ff6600",
                       "#b30d00",
                       "#f7b4b4",
-                      "#5b3c11",
+                      "#002060",
                       "black")
 
 # Generate plot: day to day
@@ -550,19 +550,17 @@ plot_inst_estimates$candidate <- factor(plot_inst_estimates$candidate,
 ## Create plot
 
 # Define candidate colors
-candidate_colors <- c("#0070c0",
-                      "#00b050",
+candidate_colors <- c("#00b050",
                       "#ff1300",
                       "gray60", 
-                      "#002060",
+                      "#0070c0",
                       "#ff6600",
                       "#b30d00",
                       "#f7b4b4",
-                      "#5b3c11",
+                      "#002060",
                       "black")[match(as.vector(plot_inst_estimates$candidate
                                                  [rev(order(plot_inst_estimates$median))]),
-                                       c("Liste DLF", 
-                                         "Liste EELV", 
+                                       c("Liste EELV", 
                                          "Liste LFI", 
                                          "Liste LO", 
                                          "Liste LR",
