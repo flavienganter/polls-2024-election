@@ -81,7 +81,7 @@ data <- read_excel("PollsData.xlsx") %>%
   mutate(id_hyp = 1:n()) %>% 
     
   # Remove irrelavant scenarios
-  filter(n_wgt > 0) %>%
+  filter(n_wgt == 1) %>%
     
   # Remove DLF
   select(-c_dlf) %>% 
@@ -94,36 +94,26 @@ data <- read_excel("PollsData.xlsx") %>%
     
   # Rounding indicator
   mutate(rounding_ind = case_when(share == "T_0.5" ~ 5,
-                                  share == "T_1.5" ~ 5,
-                                  share == "T_1" ~ 4,
+                                  share == "T_1.5" ~ 4,
+                                  share == "T_1" ~ 3,
                                   rounding == 1 ~ 2,
                                   rounding == 0.5 ~ 1,
                                   rounding == 0.1 ~ 0)) %>% 
   
   # Recode truncated values and switch to share
-  mutate(share = case_when(share == "T_0.5" ~ 0.0025,
-                           share == "T_1.5" ~ 0.0075,
-                           share == "T_1" ~ 0.005,
-                           TRUE ~ as.numeric(share) / 100)) %>% 
-  
-  # Standardize distributions to account for the fact that
-  # the number of candidates tested varies between and within polls
-  group_by(id_hyp) %>% 
-  mutate(sum_share = sum(share)) %>%
-  ungroup() %>% 
+  mutate(vshare_raw = case_when(rounding_ind %in% c(3:5) ~ 0,
+                                TRUE ~ as.numeric(share) / 100)) %>%
     
   # Renumber polls (to account for polls that have been removed)
   group_by(id) %>% 
   mutate(id_poll = cur_group_id()) %>% 
   ungroup() %>% 
+    
+  # Rename total n variable
+  rename(tot_eff = n_t1) %>% 
   
-  # Switch from share for numbers, create a logged sample size variable,
-  # and center and standardize the variable that indicates what respondents
-  # are included in the estimates (all of them, only those who are certain to
-  # vote, or a mix of both)
-  mutate(vote_eff = round(n_t1 * n_wgt * share),
-         tot_eff = round(n_t1 * n_wgt),
-         not_hayer = 1 - hayer,
+  # Create covariates
+  mutate(not_hayer = 1 - hayer,
          not_dupontaignant = 1 - dupontaignant,
          unsure_1 = scale_factor(variable = unsure)[[1]],
          unsure_2 = scale_factor(variable = unsure)[[2]]) %>% 
@@ -147,10 +137,7 @@ data <- read_excel("PollsData.xlsx") %>%
   # Create date IDs
   mutate(id_date_start = as.numeric(as.Date(paste(year, month_start, day_start, sep = "-"))) - 19524,
          id_date_end = as.numeric(as.Date(paste(year, month_end, day_end, sep = "-"))) - 19524,
-         id_date = round(id_date_start + (id_date_end - id_date_start) / 2)) %>% 
-    
-  # Outcome variable (with censored observations set to 0)
-  mutate(vshare_raw = ifelse(rounding_ind %in% c(3:5), 0, share))
+         id_date = round(id_date_start + (id_date_end - id_date_start) / 2))
   
   
 # Export
@@ -187,7 +174,6 @@ data_spline_model <- list(N             = nrow(data_i),
                           id_cand       = i,
                           tot_eff       = data_i$tot_eff,
                           vshare_raw    = data_i$vshare_raw,
-                          sum_share     = data_i$sum_share,
                           rounding_ind  = data_i$rounding_ind,
                           r_0           = data_i$r_0,
                           N_0           = max(data_i$r_0),

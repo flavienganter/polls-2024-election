@@ -5,7 +5,6 @@ data {
   int id_cand;
   array[N] int tot_eff;
   array[N] real<lower=0,upper=1> vshare_raw;
-  array[N] real sum_share;
   array[N] int rounding_ind;
   array[N] int r_0;
   int N_0;
@@ -51,11 +50,12 @@ parameters {
   real<lower=0> tau_lambda;
   
   // Rounding error
-  array[N_1] real<lower=-0.005,upper=0.005> epsilon1;
-  array[N_2] real<lower=-0.01,upper=0.01> epsilon2;
-  array[N_3] real<lower=0.001,upper=0.015> epsilon3;
-  array[N_4] real<lower=0.001,upper=0.01> epsilon4;
-  array[N_5] real<lower=0.001,upper=0.005> epsilon5;
+  array[N_0] real<lower=-0.0005,upper=0.0005> epsilon0;
+  array[N_1] real<lower=-0.0025,upper=0.0025> epsilon1;
+  array[N_2] real<lower=-0.005,upper=0.005> epsilon2;
+  array[N_3] real<lower=0,upper=0.01> epsilon3;
+  array[N_4] real<lower=0,upper=0.015> epsilon4;
+  array[N_5] real<lower=0,upper=0.005> epsilon5;
   
 }
 transformed parameters {
@@ -97,7 +97,7 @@ transformed parameters {
     } else {
       epsilon[i] = epsilon5[r_5[i]];
     }
-    vshare[i] = (vshare_raw[i] + epsilon[i]) / sum_share[i];
+    vshare[i] = vshare_raw[i] + epsilon[i];
     
     
   }
