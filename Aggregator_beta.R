@@ -83,11 +83,11 @@ data <- read_excel("PollsData.xlsx") %>%
   # Remove irrelavant scenarios
   filter(n_wgt == 1) %>%
     
-  # Remove DLF
-  select(-c_dlf) %>% 
+  # Remove DLF and LO
+  select(-c_dlf, -c_lo) %>% 
   
   # Wide to long
-  gather(candidate, share, c_lo:c_r) %>% 
+  gather(candidate, share, c_lfi:c_r) %>% 
   
   # Remove rows corresponding to untested candidates
   filter(!is.na(share)) %>% 
@@ -113,21 +113,22 @@ data <- read_excel("PollsData.xlsx") %>%
   rename(tot_eff = n_t1) %>% 
   
   # Create covariates
-  mutate(not_hayer = 1 - hayer,
-         not_dupontaignant = 1 - dupontaignant,
+  mutate(hayer_sc = scale_factor(variable = hayer),
+         dupontaignant_sc = scale_factor(variable = dupontaignant),
+         rolling = (poll_type == "rolling") * 1L,
+         rolling_sc = scale_factor(variable = rolling),
          unsure_1 = scale_factor(variable = unsure)[[1]],
          unsure_2 = scale_factor(variable = unsure)[[2]]) %>% 
   
   # Create a candidate ID
-  mutate(id_candidate = case_when(candidate == "c_lo" ~ 1,
-                                  candidate == "c_lfi" ~ 2,
-                                  candidate == "c_pcf" ~ 3,
-                                  candidate == "c_eelv" ~ 4,
-                                  candidate == "c_ps" ~ 5,
-                                  candidate == "c_lrem" ~ 6,
-                                  candidate == "c_lr" ~ 7,
-                                  candidate == "c_rn" ~ 8,
-                                  candidate == "c_r" ~ 9)) %>% 
+  mutate(id_candidate = case_when(candidate == "c_lfi" ~ 1,
+                                  candidate == "c_pcf" ~ 2,
+                                  candidate == "c_eelv" ~ 3,
+                                  candidate == "c_ps" ~ 4,
+                                  candidate == "c_lrem" ~ 5,
+                                  candidate == "c_lr" ~ 6,
+                                  candidate == "c_rn" ~ 7,
+                                  candidate == "c_r" ~ 8)) %>% 
   
   # Create a house ID
   group_by(house) %>% 
@@ -135,8 +136,8 @@ data <- read_excel("PollsData.xlsx") %>%
   ungroup() %>% 
     
   # Create date IDs
-  mutate(id_date_start = as.numeric(as.Date(paste(year, month_start, day_start, sep = "-"))) - 19524,
-         id_date_end = as.numeric(as.Date(paste(year, month_end, day_end, sep = "-"))) - 19524,
+  mutate(id_date_start = as.numeric(as.Date(paste(year, month_start, day_start, sep = "-"))) - 19524 + 1,
+         id_date_end = as.numeric(as.Date(paste(year, month_end, day_end, sep = "-"))) - 19524 + 1,
          id_date = round(id_date_start + (id_date_end - id_date_start) / 2))
   
   
@@ -147,7 +148,7 @@ save(data, file = "PollsData.RData")
 
 # MODEL -------------------------------------------------------------------------------------------------
 
-for (i in 1:9) {
+for (i in 1:8) {
   
 # Keep data for one candidate
 data_i <- data %>% 
@@ -164,41 +165,47 @@ data_i <- data %>%
          r_5 = ifelse(rounding_ind == 5, rr, 0))
 
 # Define splines 
-num_knots     <- 6
+num_knots     <- 7
 spline_degree <- 3
 num_basis     <- num_knots + spline_degree - 1
-B             <- t(bs(1:max(data_i$id_date), df = num_basis, degree = spline_degree, intercept = TRUE))
+B             <- t(bs(1:max(data_i$id_date_end), df = num_basis, degree = spline_degree, intercept = TRUE))
 
 # Gather data to feed the model
-data_spline_model <- list(N             = nrow(data_i),
-                          id_cand       = i,
-                          tot_eff       = data_i$tot_eff,
-                          vshare_raw    = data_i$vshare_raw,
-                          rounding_ind  = data_i$rounding_ind,
-                          r_0           = data_i$r_0,
-                          N_0           = max(data_i$r_0),
-                          r_1           = data_i$r_1,
-                          N_1           = max(data_i$r_1),
-                          r_2           = data_i$r_2,
-                          N_2           = max(data_i$r_2),
-                          r_3           = data_i$r_3,
-                          N_3           = max(data_i$r_3),
-                          r_4           = data_i$r_4,
-                          N_4           = max(data_i$r_4),
-                          r_5           = data_i$r_5,
-                          N_5           = max(data_i$r_5),
-                          id_date       = round(data_i$id_date),
-                          id_poll       = data_i$id_poll,
-                          P             = length(unique(data_i$id_poll)),
-                          id_house      = data_i$id_house,
-                          F             = length(unique(data_i$id_house)),
-                          X             = data_i[, c("unsure_1", "unsure_2", "not_hayer", "not_dupontaignant")],
-                          num_knots     = num_knots,
-                          knots         = unname(quantile(1:max(data_i$id_date), probs = seq(from = 0, to = 1, length.out = num_knots))),
-                          spline_degree = spline_degree,
-                          num_basis     = num_basis,
-                          D             = ncol(B),
-                          S             = as.matrix(B))
+data_spline_model <- list(N               = nrow(data_i),
+                          id_cand         = i,
+                          tot_eff         = data_i$tot_eff,
+                          vshare_raw      = data_i$vshare_raw,
+                          rounding_ind    = data_i$rounding_ind,
+                          r_0             = data_i$r_0,
+                          N_0             = max(data_i$r_0),
+                          r_1             = data_i$r_1,
+                          N_1             = max(data_i$r_1),
+                          r_2             = data_i$r_2,
+                          N_2             = max(data_i$r_2),
+                          r_3             = data_i$r_3,
+                          N_3             = max(data_i$r_3),
+                          r_4             = data_i$r_4,
+                          N_4             = max(data_i$r_4),
+                          r_5             = data_i$r_5,
+                          N_5             = max(data_i$r_5),
+                          id_date         = data_i$id_date,
+                          id_date_end     = data_i$id_date_end,
+                          id_poll         = data_i$id_poll,
+                          P               = length(unique(data_i$id_poll)),
+                          id_house        = data_i$id_house,
+                          F               = length(unique(data_i$id_house)),
+                          X               = data_i[, c("unsure_1", "unsure_2", 
+                                                       "hayer_sc", "dupontaignant_sc",
+                                                       "rolling_sc")],
+                          hayer_b         = max(data_i$hayer_sc),
+                          dupontaignant_b = min(data_i$dupontaignant_sc),
+                          rolling_b       = min(data_i$rolling_sc),
+                          num_knots       = num_knots,
+                          knots           = unname(quantile(1:max(data_i$id_date_end), probs = seq(from = 0, to = 1, length.out = num_knots))),
+                          spline_degree   = spline_degree,
+                          num_basis       = num_basis,
+                          D               = ncol(B),
+                          S               = as.matrix(B))
   
 # Compile model
 model_code <- cmdstan_model("ModelSplinesByC_beta.stan")
@@ -235,8 +242,7 @@ spline_draws <- get_draws(candidate = 1) %>%
   add_column(get_draws(candidate = 5)) %>% 
   add_column(get_draws(candidate = 6)) %>% 
   add_column(get_draws(candidate = 7)) %>% 
-  add_column(get_draws(candidate = 8)) %>% 
-  add_column(get_draws(candidate = 9))
+  add_column(get_draws(candidate = 8))
 
 
 ## Get official results ----
@@ -328,29 +334,27 @@ plot_spline_estimates <- plot_spline_estimates %>%
          date = case_when(substr(date, 3, 3) == "," ~ substr(date, 1, 2),
                           substr(date, 2, 2) == "," ~ substr(date, 1, 1),
                           TRUE ~ substr(date, 1, 3)),
-         date = as.Date(as.numeric(date)-1, origin = as.Date("2023-06-16")),
+         date = as.Date(as.numeric(date)-2, origin = as.Date("2023-06-16")),
          candidate = substr(coef, 7, 11),
          candidate = case_when(substr(candidate, 1, 1) == "," ~ substr(candidate, 2, 3),
                                substr(candidate, 2, 2) == "," ~ substr(candidate, 3, 4),
                                TRUE ~ substr(candidate, 4, 5)),
          candidate = ifelse(substr(candidate, 2, 2) == "]", substr(candidate, 1, 1), candidate),
-         candidate = as.factor(case_when(candidate == 1 ~ "Liste LO",
-                                         candidate == 2 ~ "Liste LFI",
-                                         candidate == 3 ~ "Liste PCF",
-                                         candidate == 4 ~ "Liste EELV",
-                                         candidate == 5 ~ "Liste PS-PP",
-                                         candidate == 6 ~ "Liste LREM",
-                                         candidate == 7 ~ "Liste LR",
-                                         candidate == 8 ~ "Liste RN",
-                                         candidate == 9 ~ "Liste R!")))
+         candidate = as.factor(case_when(candidate == 1 ~ "Liste LFI",
+                                         candidate == 2 ~ "Liste PCF",
+                                         candidate == 3 ~ "Liste EELV",
+                                         candidate == 4 ~ "Liste PS-PP",
+                                         candidate == 5 ~ "Liste LREM",
+                                         candidate == 6 ~ "Liste LR",
+                                         candidate == 7 ~ "Liste RN",
+                                         candidate == 8 ~ "Liste R!")))
 
 
 ### Create plot
 
 # Define candidate colors
 candidate_colors <- c("#00b050",
-                      "#ff1300",
-                      "gray60", 
+                      "#ff1300", 
                       "#0070c0",
                       "#ff6600",
                       "#b30d00",
@@ -538,7 +542,6 @@ plot_inst_estimates$candidate <- factor(plot_inst_estimates$candidate,
 # Define candidate colors
 candidate_colors <- c("#00b050",
                       "#ff1300",
-                      "gray60", 
                       "#0070c0",
                       "#ff6600",
                       "#b30d00",
@@ -547,8 +550,7 @@ candidate_colors <- c("#00b050",
                       "black")[match(as.vector(plot_inst_estimates$candidate
                                                  [rev(order(plot_inst_estimates$median))]),
                                        c("Liste EELV", 
-                                         "Liste LFI", 
-                                         "Liste LO", 
+                                         "Liste LFI",  
                                          "Liste LR",
                                          "Liste LREM", 
                                          "Liste PCF", 
