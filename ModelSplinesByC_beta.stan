@@ -23,7 +23,10 @@ data {
   array[N] int id_date;
   array[N] int id_house;
   int F;
-  matrix[N,4] X;
+  matrix[N,5] X;
+  real hayer_b;
+  real dupontaignant_b;
+  real rolling_b;
   
   // Splines
   int num_knots;
@@ -44,7 +47,7 @@ parameters {
   // Covariates
   array[P] real mu;
   array[F] real lambda;
-  array[4] real beta;
+  array[5] real beta;
   array[2] real nu;
   real<lower=0> tau_mu;
   real<lower=0> tau_lambda;
@@ -80,7 +83,7 @@ transformed parameters {
                                 tau_lambda * lambda[id_house[i]] + // House effect
                                 X[i,1] * (beta[1] + nu[1] * (id_date[i] - 1)) + // Population definition
                                 X[i,2] * (beta[2] + nu[2] * (id_date[i] - 1)) +
-                                X[i,3] * beta[3] + X[i,4] * beta[4]);
+                                X[i,3] * beta[3] + X[i,4] * beta[4] + X[i,5] * beta[5]);
     
     
     // Rounding error
@@ -137,6 +140,7 @@ generated quantities {
   // and the date of the most recent poll
   array[D] real<lower=0,upper=1> prob;
   for (d in 1:D)
-      prob[d] = inv_logit(alpha0 * d + to_row_vector(alpha) * S[,d]);
+      prob[d] = inv_logit(alpha0 * d + to_row_vector(alpha) * S[,d] + 
+                              hayer_b * beta[3] + dupontaignant_b * beta[4] + rolling_b * beta[5]);
       
 }
