@@ -2,7 +2,7 @@
 # Flavien Ganter
 
 # Created on October 4, 2021
-# Last modified on March 2, 2022
+# Last modified on May 21, 2024
 
 
 
@@ -13,7 +13,7 @@
 rm(list = ls())
 
 # Set working directory
-setwd("~/Dropbox/PollsFrance2024/")
+#setwd("~/Dropbox/PollsFrance2024/")
 options(mc.cores = parallel::detectCores())
 Sys.setlocale("LC_TIME", "fr_FR.UTF-8")
 
@@ -109,8 +109,8 @@ data <- read_excel("PollsData.xlsx") %>%
   mutate(id_poll = cur_group_id()) %>% 
   ungroup() %>% 
     
-  # Rename total n variable
-  rename(tot_eff = n_t1) %>% 
+  # Rename and weight total n variable
+  mutate(tot_eff = round(n_t1 * n_wgt)) %>% 
   
   # Create covariates
   mutate(hayer_sc = scale_factor(variable = hayer),
