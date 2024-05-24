@@ -448,7 +448,7 @@ poll_plot <- plot_spline_estimates %>%
        y = "Intentions de votes (% votes exprimés)",
        title = "Intentions de vote à l'élection européenne française de 2024",
        subtitle = "Depuis septembre 2023",
-       caption = paste0("Estimations obtenues à partir des enquêtes d'opinion réalisées par BVA, Cluster17, Elabe, Harris Interactive, IFOP, IPSOS, Kantar, Odoxa, et OpinionWay depuis juin 2021 sur la base des rapports d'enquête publiés sur le site de la Commission des sondages, et agrégées à l'aide d'un modèle bayésien tenant compte \ndes principales caractéristiques des enquêtes. Le graphique présente les médianes et intervalles de crédibilité (95% / 50%). Pour chaque candidat, la ligne solide relie les médianes des distributions a posteriori à chaque date, et la zone colorée représente la partie la plus dense de la distribution a posteriori (95% / 50%) des \ndistributions a posteriori. Dernière mise à jour : ", format(Sys.time(), "%d %B %Y"), ".")) +
+       caption = paste0("Estimations obtenues à partir des enquêtes d'opinion réalisées par BVA, Cluster17, Elabe, Harris Interactive, IFOP, IPSOS, Odoxa, OpinionWay et ViaVoice depuis septembre 2023 sur la base des rapports d'enquête publiés sur le site de la Commission des sondages, et agrégées à l'aide d'un modèle bayésien tenant compte \ndes principales caractéristiques des enquêtes. Le graphique présente les médianes et intervalles de crédibilité (95% / 50%). Pour chaque candidat, la ligne solide relie les médianes des distributions a posteriori à chaque date, et la zone colorée représente la partie la plus dense de la distribution a posteriori (95% / 50%) des \ndistributions a posteriori. Dernière mise à jour : ", format(Sys.time(), "%d %B %Y"), ".")) +
        #caption = paste0("Estimations obtenues à partir des enquêtes d'opinion réalisées par BVA, Cluster17, Elabe, Harris Interactive, IFOP, IPSOS, Kantar, Odoxa, et OpinionWay depuis septembre 2021 sur la base des rapports d'enquête publiés sur le site de la Commission des sondages, et agrégées à l'aide d'un modèle bayésien tenant compte \ndes principales caractéristiques des enquêtes. Le graphique présente les médianes et intervalles de crédibilité (95% / 50%)Pour chaque candidat, la ligne solide relie les médianes des distributions a posteriori à chaque date, et la zone colorée représente la partie la plus dense de la distribution a posteriori (95% / 50%) des \ndistributions a posteriori. Dernière mise à jour: ", format(Sys.time(), "%d %B %Y"), ".")) +
   
   # Specify plot theme
@@ -500,8 +500,155 @@ poll_plot <- plot_spline_estimates %>%
                                "Mai",
                                "Juin",
                                "Juillet"),
-               limits = c(as.Date("2023-09-01"), as.Date("2024-06-15"))
+               limits = c(as.Date("2023-09-01"), as.Date("2024-06-25"))
                ) +
+  
+  # Percent axis
+  scale_y_continuous(labels = function(x) paste0(x, "%"), 
+                     expand = c(0, 0), 
+                     breaks = seq(0, 30, 5), 
+                     lim = c(0, 36))
+
+# Generate plot (final): day to day
+poll_plot <- plot_spline_estimates %>% 
+  mutate(label_candidate = candidate,
+         label = if_else(date == max(date), 
+                         paste0(as.character(label_candidate), " (",
+                                unlist(lapply(median*100, round2)), "%)"),
+                         NA_character_),
+         median_label = case_when(#candidate == "Liste LFI" ~ median + .002,
+           #candidate == "Liste LR" ~ median - .005,
+           #candidate == "Liste DLF" ~ median - .003,
+           !is.na(candidate) ~ median)) %>% 
+  group_by(candidate) %>% 
+  mutate(lower50_l = zoo::rollmean(lower50, k = 2, align = "left", fill = NA),
+         lower50_r = zoo::rollmean(lower50, k = 2, align = "right", fill = NA),
+         upper50_l = zoo::rollmean(upper50, k = 2, align = "left", fill = NA),
+         upper50_r = zoo::rollmean(upper50, k = 2, align = "right", fill = NA),
+         lower95_l = zoo::rollmean(lower95, k = 2, align = "left", fill = NA),
+         lower95_r = zoo::rollmean(lower95, k = 2, align = "right", fill = NA),
+         upper95_l = zoo::rollmean(upper95, k = 2, align = "left", fill = NA),
+         upper95_r = zoo::rollmean(upper95, k = 2, align = "right", fill = NA),
+         lower50_s = zoo::rollmean(lower50, k = 3, fill = NA),
+         upper50_s = zoo::rollmean(upper50, k = 3, fill = NA),
+         lower95_s = zoo::rollmean(lower95, k = 3, fill = NA),
+         upper95_s = zoo::rollmean(upper95, k = 3, fill = NA),
+         lower50_s = ifelse(is.na(lower50_s), lower50_l, lower50_s),
+         lower50_s = ifelse(is.na(lower50_s), lower50_r, lower50_s),
+         upper50_s = ifelse(is.na(upper50_s), upper50_l, upper50_s),
+         upper50_s = ifelse(is.na(upper50_s), upper50_r, upper50_s),
+         lower95_s = ifelse(is.na(lower95_s), lower95_l, lower95_s),
+         lower95_s = ifelse(is.na(lower95_s), lower95_r, lower95_s),
+         upper95_s = ifelse(is.na(upper95_s), upper95_l, upper95_s),
+         upper95_s = ifelse(is.na(upper95_s), upper95_r, upper95_s)) %>% 
+  filter(date > as.Date("2023-08-31")) %>% 
+  ggplot(aes(x = date, 
+             group = candidate, 
+             color = candidate)) +
+  
+  # Plot data
+  geom_line(aes(y = median * 100)) +
+  geom_ribbon(aes(ymin = lower50_s * 100, 
+                  ymax = upper50_s * 100, 
+                  fill = candidate), 
+              alpha = .1, 
+              linewidth = 0) +
+  geom_ribbon(aes(ymin = lower95_s * 100, 
+                  ymax = upper95_s * 100, 
+                  fill = candidate), 
+              alpha = .1, 
+              linewidth = 0) +
+  
+  # Candidate labels
+  geom_text(aes(x = as.Date("2024-06-10"), 
+                y = median_label * 100, 
+                label = label), 
+            na.rm = TRUE,
+            hjust = 0, 
+            vjust = 0, 
+            nudge_y = -.1, 
+            family = "Open Sans Condensed", 
+            size = 3) +
+  
+  # Show latest poll's date
+  annotate("segment", x = max(plot_spline_estimates$date), y = 0, xend = max(plot_spline_estimates$date), yend = 35,
+           size = .4) +
+  annotate(geom = "text", x = max(plot_spline_estimates$date), y = 35.5, family = "Open Sans Condensed",
+           label = format(max(plot_spline_estimates$date), "%d %B %Y"), size = 3) +
+  
+  # Show election date
+  annotate("segment",
+           x = as.Date("2024-06-9"), 
+           y = 0, 
+           xend = as.Date("2024-06-9"), 
+           yend = 33.5,
+           size = .4) +
+  annotate(geom = "text", 
+           x = as.Date("2024-06-9"), 
+           y = 34.75, 
+           label = "Élection \n10 avril 2022", 
+           family = "Open Sans Condensed",
+           size = 3) +
+  
+  # Define labs
+  labs(x = "", 
+       y = "Intentions de votes (% votes exprimés)",
+       title = "Intentions de vote à l'élection européenne française de 2024",
+       subtitle = "Depuis septembre 2023",
+       caption = paste0("Estimations obtenues à partir des enquêtes d'opinion réalisées par BVA, Cluster17, Elabe, Harris Interactive, IFOP, IPSOS, Odoxa, OpinionWay et ViaVoice depuis septembre 2023 sur la base des rapports d'enquête publiés sur le site de la Commission des sondages, et agrégées à l'aide d'un modèle bayésien tenant compte \ndes principales caractéristiques des enquêtes. Le graphique présente les médianes et intervalles de crédibilité (95% / 50%). Pour chaque candidat, la ligne solide relie les médianes des distributions a posteriori à chaque date, et la zone colorée représente la partie la plus dense de la distribution a posteriori (95% / 50%) des \ndistributions a posteriori. Dernière mise à jour : ", format(Sys.time(), "%d %B %Y"), ".")) +
+  #caption = paste0("Estimations obtenues à partir des enquêtes d'opinion réalisées par BVA, Cluster17, Elabe, Harris Interactive, IFOP, IPSOS, Kantar, Odoxa, et OpinionWay depuis septembre 2021 sur la base des rapports d'enquête publiés sur le site de la Commission des sondages, et agrégées à l'aide d'un modèle bayésien tenant compte \ndes principales caractéristiques des enquêtes. Le graphique présente les médianes et intervalles de crédibilité (95% / 50%)Pour chaque candidat, la ligne solide relie les médianes des distributions a posteriori à chaque date, et la zone colorée représente la partie la plus dense de la distribution a posteriori (95% / 50%) des \ndistributions a posteriori. Dernière mise à jour: ", format(Sys.time(), "%d %B %Y"), ".")) +
+  
+  # Specify plot theme
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(color = "#2b2b2b", 
+                                          linetype = "dotted", 
+                                          size = 0.05),
+        text = element_text(family = "Open Sans Condensed", 
+                            size = 7.5),
+        axis.text = element_text(size = 8),
+        axis.text.x = element_text(hjust = 0),
+        axis.text.y = element_text(margin = margin(r = -2)),
+        axis.title = element_blank(),
+        axis.line.x = element_line(color = "#2b2b2b", 
+                                   size = 0.15),
+        axis.ticks.x = element_line(color = "#2b2b2b", 
+                                    size = 0.15),
+        axis.ticks.length = unit(.2, "cm"),
+        plot.title = element_text(size = 20, 
+                                  family = "Open Sans Condensed ExtraBold", 
+                                  face = "bold"),
+        plot.title.position = "plot",
+        plot.subtitle = element_text(size = 12),
+        legend.position = "none",
+        plot.caption = element_text(color = "gray30", 
+                                    hjust = 0, 
+                                    margin = margin(t = 15)),
+        plot.margin = unit(rep(0.5, 4), "cm")) +
+  
+  # Candidate colors
+  guides(color = guide_legend(nrow = 3, byrow = TRUE)) +
+  scale_colour_manual(values = candidate_colors) +
+  scale_fill_manual(values = candidate_colors) +
+  
+  # Date axis
+  scale_x_date(expand = c(.005,1), 
+               date_breaks = "1 month",
+               date_labels = c("Août",
+                               "Septembre", 
+                               "Octobre",
+                               "Novembre", 
+                               "Décembre", 
+                               "Janvier", 
+                               "Février", 
+                               "Mars",
+                               "Avril",
+                               "Mai",
+                               "Juin",
+                               "Juillet"),
+               limits = c(as.Date("2023-09-01"), as.Date("2024-07-4"))
+  ) +
   
   # Percent axis
   scale_y_continuous(labels = function(x) paste0(x, "%"), 
@@ -597,7 +744,7 @@ inst_plot <- plot_inst_estimates %>%
        y = "Intentions de votes (% votes exprimés)",
        title = "Intentions de vote à l'élection européenne française de 2024",
        subtitle = paste("Au", format(Sys.time(), "%d %B %Y")),
-       caption = paste0("Estimations obtenues à partir des enquêtes d'opinion réalisées par BVA, Cluster17, Elabe, Harris Interactive, IFOP, IPSOS, Kantar, Odoxa, et OpinionWay depuis juin 2023 sur la base des rapports d'enquête publiés sur le site de la Commission des sondages, et agrégées à \nl'aide d'un modèle bayésien tenant compte des principales caractéristiques des enquêtes. Le graphique présente les médianes et intervalles de crédibilité (95% / 90% / 80% / 50%) des distributions a posteriori. Dernière mise à jour : ", format(Sys.time(), "%d %B %Y"), ".")) +
+       caption = paste0("Estimations obtenues à partir des enquêtes d'opinion réalisées par BVA, Cluster17, Elabe, Harris Interactive, IFOP, IPSOS, Odoxa, OpinionWay et ViaVoice depuis juin 2023 sur la base des rapports d'enquête publiés sur le site de la Commission des sondages, et agrégées à \nl'aide d'un modèle bayésien tenant compte des principales caractéristiques des enquêtes. Le graphique présente les médianes et intervalles de crédibilité (95% / 90% / 80% / 50%) des distributions a posteriori. Dernière mise à jour : ", format(Sys.time(), "%d %B %Y"), ".")) +
   
   # Specify plot theme
   coord_flip() +
