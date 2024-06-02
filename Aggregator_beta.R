@@ -367,7 +367,7 @@ poll_plot <- plot_spline_estimates %>%
   mutate(label_candidate = candidate,
          label = if_else(date == max(date), 
                          paste0(as.character(label_candidate), " (",
-                                unlist(lapply(median*100, round2)), "%)"),
+                                unlist(lapply(median*1000, round))/10, "%)"),
                          NA_character_),
          median_label = case_when(#candidate == "Liste LFI" ~ median + .002,
                                   #candidate == "Liste LR" ~ median - .005,
@@ -514,7 +514,7 @@ poll_plot <- plot_spline_estimates %>%
   mutate(label_candidate = candidate,
          label = if_else(date == max(date), 
                          paste0(as.character(label_candidate), " (",
-                                unlist(lapply(median*100, round2)), "%)"),
+                                unlist(lapply(median*1000, round))/10, "%)"),
                          NA_character_),
          median_label = case_when(#candidate == "Liste LFI" ~ median + .002,
            #candidate == "Liste LR" ~ median - .005,
@@ -571,10 +571,10 @@ poll_plot <- plot_spline_estimates %>%
             size = 3) +
   
   # Show latest poll's date
-  annotate("segment", x = max(plot_spline_estimates$date), y = 0, xend = max(plot_spline_estimates$date), yend = 35,
-           size = .4) +
-  annotate(geom = "text", x = max(plot_spline_estimates$date), y = 35.5, family = "Open Sans Condensed",
-           label = format(max(plot_spline_estimates$date), "%d %B %Y"), size = 3) +
+  # annotate("segment", x = max(plot_spline_estimates$date), y = 0, xend = max(plot_spline_estimates$date), yend = 35,
+  #          size = .4) +
+  # annotate(geom = "text", x = max(plot_spline_estimates$date), y = 35.5, family = "Open Sans Condensed",
+  #          label = format(max(plot_spline_estimates$date), "%d %B %Y"), size = 3) +
   
   # Show election date
   annotate("segment",
@@ -678,7 +678,7 @@ ggsave(poll_plot,
 
 plot_inst_estimates <- plot_spline_estimates %>% 
   filter(date == max(date))  %>%
-  mutate(label = paste0(unlist(lapply(median*100, round2)), "%"),
+  mutate(label = paste0(unlist(lapply(median*1000, round))/10, "%"),
          label = ifelse(label == "0.5%", "   0.5%", label))
 plot_inst_estimates$candidate <- factor(plot_inst_estimates$candidate,
                                         levels = as.vector(plot_inst_estimates$candidate
