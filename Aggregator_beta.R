@@ -66,7 +66,6 @@ extrafont::loadfonts()
   get_draws <- function(candidate) {
     load(paste0("ModelOutput/model_aggregator_bycbeta_", candidate, ".RData"))
     spline_draws <- as.data.frame(spline_draws) %>% select(-.chain, -.iteration, -.draw)
-    #spline_draws <- as.data.frame(estimated_spline_model$draws("prob", format = "matrix"))
     colnames(spline_draws) <- paste0("prob[", 1:ncol(spline_draws), ",", candidate, "]")
     return(spline_draws)
   }
@@ -93,15 +92,16 @@ data <- read_excel("PollsData.xlsx") %>%
   filter(!is.na(share)) %>% 
     
   # Rounding indicator
-  mutate(rounding_ind = case_when(share == "T_0.5" ~ 5,
-                                  share == "T_1.5" ~ 4,
-                                  share == "T_1" ~ 3,
-                                  rounding == 1 ~ 2,
-                                  rounding == 0.5 ~ 1,
-                                  rounding == 0.1 ~ 0)) %>% 
+  mutate(rounding_ind = case_when(share == "T_0.5" ~ 6,
+                                  share == "T_1.5" ~ 5,
+                                  share == "T_1" ~ 4,
+                                  rounding == 1 ~ 3,
+                                  rounding == 0.5 ~ 2,
+                                  rounding == 0.1 ~ 1,
+                                  rounding == 0.01 ~ 0)) %>% 
   
   # Recode truncated values and switch to share
-  mutate(vshare_raw = case_when(rounding_ind %in% c(3:5) ~ 0,
+  mutate(vshare_raw = case_when(rounding_ind %in% c(4:6) ~ 0,
                                 TRUE ~ as.numeric(share) / 100)) %>%
     
   # Renumber polls (to account for polls that have been removed)
@@ -162,7 +162,8 @@ data_i <- data %>%
          r_2 = ifelse(rounding_ind == 2, rr, 0),
          r_3 = ifelse(rounding_ind == 3, rr, 0),
          r_4 = ifelse(rounding_ind == 4, rr, 0),
-         r_5 = ifelse(rounding_ind == 5, rr, 0))
+         r_5 = ifelse(rounding_ind == 5, rr, 0),
+         r_6 = ifelse(rounding_ind == 6, rr, 0))
 
 # Define splines 
 num_knots     <- 7
@@ -188,6 +189,8 @@ data_spline_model <- list(N               = nrow(data_i),
                           N_4             = max(data_i$r_4),
                           r_5             = data_i$r_5,
                           N_5             = max(data_i$r_5),
+                          r_6             = data_i$r_6,
+                          N_6             = max(data_i$r_6),
                           id_date         = data_i$id_date,
                           id_date_end     = data_i$id_date_end,
                           id_poll         = data_i$id_poll,

@@ -18,6 +18,8 @@ data {
   int N_4;
   array[N] int r_5;
   int N_5;
+  array[N] int r_6;
+  int N_6;
   array[N] int id_poll;
   int P;
   array[N] int id_date;
@@ -53,12 +55,13 @@ parameters {
   real<lower=0> tau_lambda;
   
   // Rounding error
-  array[N_0] real<lower=-0.0005,upper=0.0005> epsilon0;
-  array[N_1] real<lower=-0.0025,upper=0.0025> epsilon1;
-  array[N_2] real<lower=-0.005,upper=0.005> epsilon2;
-  array[N_3] real<lower=0,upper=0.01> epsilon3;
-  array[N_4] real<lower=0,upper=0.015> epsilon4;
-  array[N_5] real<lower=0,upper=0.005> epsilon5;
+  array[N_0] real<lower=-0.00005,upper=0.00005> epsilon0;
+  array[N_1] real<lower=-0.0005,upper=0.0005> epsilon1;
+  array[N_2] real<lower=-0.0025,upper=0.0025> epsilon2;
+  array[N_3] real<lower=-0.005,upper=0.005> epsilon3;
+  array[N_4] real<lower=0,upper=0.01> epsilon4;
+  array[N_5] real<lower=0,upper=0.015> epsilon5;
+  array[N_6] real<lower=0,upper=0.005> epsilon6;
   
 }
 transformed parameters {
@@ -97,8 +100,10 @@ transformed parameters {
       epsilon[i] = epsilon3[r_3[i]];
     } else if (rounding_ind[i] == 4) {
       epsilon[i] = epsilon4[r_4[i]];
-    } else {
+    } else if (rounding_ind[i] == 5) {
       epsilon[i] = epsilon5[r_5[i]];
+    } else {
+      epsilon[i] = epsilon6[r_6[i]];
     }
     vshare[i] = vshare_raw[i] + epsilon[i];
     
