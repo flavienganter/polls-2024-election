@@ -166,7 +166,7 @@ data_i <- data %>%
          r_6 = ifelse(rounding_ind == 6, rr, 0))
 
 # Define splines 
-num_knots     <- 7
+num_knots     <- 8
 spline_degree <- 3
 num_basis     <- num_knots + spline_degree - 1
 B             <- t(bs(1:max(data_i$id_date_end), df = num_basis, degree = spline_degree, intercept = TRUE))
