@@ -2,11 +2,11 @@
 
 _Adaptation of the [poll aggregator implemented for the 2022 French Presidential Election](https://github.com/flavienganter/polls-2022-election)._
 
-Estimates of the voting intentions for the 2024 French European Election (medians of the posterior distributions, and 95%, 90%, 80%, and 50% high density credible intervals):
+Estimates of the voting intentions for the 2024 French European Election (medians of the posterior distributions, and 95%, 90%, 80%, and 50% high density credible intervals) on June 7, 2024, two days before the election:
 
 ![](https://github.com/flavienganter/polls-2024-election/blob/main/PollsFrance2024_latest.png?raw=true)
 
-Evolutions of voting intentions since September 2023 (medians of the posterior distributions, and 95% and 50% high density credible intervals):
+Evolutions of voting intentions since September 2023 (medians of the posterior distributions, and 95% and 50% high density credible intervals) and official results:
 
 ![](https://github.com/flavienganter/polls-2024-election/blob/main/PollsFrance2024_evolution.png?raw=true)
 

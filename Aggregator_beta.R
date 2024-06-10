@@ -250,61 +250,41 @@ spline_draws <- get_draws(candidate = 1) %>%
 
 ## Get official results ----
 
-if (0) {
-
-results <- data.frame(candidate = 1:12,
-                      score = c(.0056,
-                                .0206,
-                                .0175,
-                                .0463,
-                                .2315,
-                                .2785,
-                                .2195,
-                                .0478,
-                                .0077,
-                                .0228,
-                                .0313,
-                                .0707)) %>% 
-  mutate(label_candidate = as.factor(case_when(candidate == 1 ~ "Arthaud",
-                                               candidate == 2 ~ "Dupont-Aignan",
-                                               candidate == 3 ~ "Hidalgo",
-                                               candidate == 4 ~ "Jadot",
-                                               candidate == 5 ~ "Le Pen",
-                                               candidate == 6 ~ "Macron",
-                                               candidate == 7 ~ "Mélenchon",
-                                               candidate == 8 ~ "Pécresse",
-                                               candidate == 9 ~ "Poutou",
-                                               candidate == 10 ~ "Roussel",
-                                               candidate == 11 ~ "Lassalle",
-                                               candidate == 12 ~ "Zemmour")),
-         candidate = as.factor(case_when(candidate == 1 ~ "Nathalie Arthaud",
-                                         candidate == 2 ~ "Nicolas Dupont-Aignan",
-                                         candidate == 3 ~ "Anne Hidalgo",
-                                         candidate == 4 ~ "Yannick Jadot",
-                                         candidate == 5 ~ "Marine Le Pen",
-                                         candidate == 6 ~ "Emmanuel Macron",
-                                         candidate == 7 ~ "Jean-Luc Mélenchon",
-                                         candidate == 8 ~ "Valérie Pécresse",
-                                         candidate == 9 ~ "Philippe Poutou",
-                                         candidate == 10 ~ "Fabien Roussel",
-                                         candidate == 11 ~ "Jean Lassalle",
-                                         candidate == 12 ~ "Éric Zemmour")),
+results <- data.frame(candidate = 1:8,
+                      score = c(.0989,
+                                .0263,
+                                .0550,
+                                .1383,
+                                .1460,
+                                .0725,
+                                .3137,
+                                .0547)) %>% 
+  mutate(label_candidate = as.factor(case_when(candidate == 1 ~ "Liste LFI",
+                                               candidate == 2 ~ "Liste PCF",
+                                               candidate == 3 ~ "Liste EELV",
+                                               candidate == 4 ~ "Liste PS-PP",
+                                               candidate == 5 ~ "Liste LREM",
+                                               candidate == 6 ~ "Liste LR",
+                                               candidate == 7 ~ "Liste RN",
+                                               candidate == 8 ~ "Liste R!")),
+         candidate = as.factor(case_when(candidate == 1 ~ "Liste LFI",
+                                         candidate == 2 ~ "Liste PCF",
+                                         candidate == 3 ~ "Liste EELV",
+                                         candidate == 4 ~ "Liste PS-PP",
+                                         candidate == 5 ~ "Liste LREM",
+                                         candidate == 6 ~ "Liste LR",
+                                         candidate == 7 ~ "Liste RN",
+                                         candidate == 8 ~ "Liste R!")),
          candidate_final = candidate,
          label = paste0(as.character(label_candidate), " (",
                                 unlist(lapply(score*100, round, 1)), "%)"),
          label_score = paste0(unlist(lapply(score*100, round, 1)), "%"),
-         score_pos = case_when(candidate == "Anne Hidalgo" ~ score + .0005,
-                                  candidate == "Fabien Roussel" ~ score + .009,
-                                  candidate == "Nicolas Dupont-Aignan" ~ score + .0045,
-                                  candidate == "Philippe Poutou" ~ score + .003,
-                                  candidate == "Nathalie Arthaud" ~ score - .002,
-                                  candidate == "Jean-Luc Mélenchon" ~ score,
-                                  candidate == "Yannick Jadot" ~ score - .001,
-                                  candidate == "Jean Lassalle" ~ score + .008,
-                                  candidate == "Valérie Pécresse" ~ score + .005,
-                                  !is.na(candidate) ~ score))
+         score_pos = case_when(candidate == "Liste EELV" ~ score + .005,
+                               candidate == "Liste R!" ~ score - .005,
+                               candidate == "Liste LREM" ~ score + .0005,
+                               candidate == "Liste PS-PP" ~ score - .0005,
+                               !is.na(candidate) ~ score))
 
-}
 
 ## Evolution plot ----
 
@@ -442,7 +422,7 @@ poll_plot <- plot_spline_estimates %>%
   annotate(geom = "text", 
            x = as.Date("2024-06-9"), 
            y = 34.75, 
-           label = "Élection \n10 avril 2022", 
+           label = "Élection \n9 juin 2024", 
            family = "Open Sans Condensed",
            size = 3) +
   
@@ -563,8 +543,9 @@ poll_plot <- plot_spline_estimates %>%
               linewidth = 0) +
   
   # Candidate labels
-  geom_text(aes(x = as.Date("2024-06-10"), 
-                y = median_label * 100, 
+  geom_text(data = results,
+            aes(x = as.Date("2024-06-12"), 
+                y = score_pos * 100 - .2, 
                 label = label), 
             na.rm = TRUE,
             hjust = 0, 
@@ -572,12 +553,6 @@ poll_plot <- plot_spline_estimates %>%
             nudge_y = -.1, 
             family = "Open Sans Condensed", 
             size = 3) +
-  
-  # Show latest poll's date
-  # annotate("segment", x = max(plot_spline_estimates$date), y = 0, xend = max(plot_spline_estimates$date), yend = 35,
-  #          size = .4) +
-  # annotate(geom = "text", x = max(plot_spline_estimates$date), y = 35.5, family = "Open Sans Condensed",
-  #          label = format(max(plot_spline_estimates$date), "%d %B %Y"), size = 3) +
   
   # Show election date
   annotate("segment",
@@ -589,9 +564,14 @@ poll_plot <- plot_spline_estimates %>%
   annotate(geom = "text", 
            x = as.Date("2024-06-9"), 
            y = 34.75, 
-           label = "Élection \n10 avril 2022", 
+           label = "Élection \n9 juin 2024", 
            family = "Open Sans Condensed",
            size = 3) +
+  
+  # Show official results
+  geom_point(data = results,
+             aes(x = as.Date("2024-06-9"), 
+                 y = score * 100)) +
   
   # Define labs
   labs(x = "", 
@@ -650,7 +630,7 @@ poll_plot <- plot_spline_estimates %>%
                                "Mai",
                                "Juin",
                                "Juillet"),
-               limits = c(as.Date("2023-09-01"), as.Date("2024-07-4"))
+               limits = c(as.Date("2023-09-01"), as.Date("2024-07-6"))
   ) +
   
   # Percent axis
